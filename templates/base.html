@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" class="{% if dark_mode %}dark{% endif %}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Potatodev's Developer Atlas{% endblock %}</title>
+  <meta name="description" content="{% block description %}Discover the best open source projects. Curated for developers, updated daily.{% endblock %}">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Potatodev's Developer Atlas">
+  <meta property="og:title" content="{% block og_title %}Potatodev's Developer Atlas{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Discover the best open source projects. Curated for developers, updated daily.{% endblock %}">
+  <meta property="og:url" content="{{ site_url | default('https://developer-atlas.example.com') }}">
+  <meta property="og:image" content="{{ site_url | default('https://developer-atlas.example.com') }}/assets/images/og-image.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}Potatodev's Developer Atlas{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}Discover the best open source projects. Curated for developers, updated daily.{% endblock %}">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ site_url | default('https://developer-atlas.example.com') }}/{{ current_page | default('') }}">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="Potatodev's Developer Atlas - Latest Projects" href="/feed.xml">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/assets/css/output.css">
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col">
+  {% include 'components/header.html' %}
+
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include 'components/footer.html' %}
+
+  <!-- Scripts -->
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/search.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

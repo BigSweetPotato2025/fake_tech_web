@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Topics — Potatodev's Developer Atlas{% endblock %}
+{% block description %}Browse open source projects by topic — AI, Database, Docker, CLI, Security, and more.{% endblock %}
+
+{% block content %}
+<div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-enter">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-stone-700 dark:text-gray-100">Topics</h1>
+    <p class="mt-1 text-stone-600/70 dark:text-gray-400">
+      {% if topics %}
+        {{ topics | length }} topics
+      {% endif %}
+    </p>
+  </div>
+
+  {% if topics %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for topic in topics %}
+    <a href="/topics/{{ topic.name }}/" class="card-hover p-5">
+      <div class="flex items-center gap-3 mb-2">
+        {% if topic.color %}
+        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ topic.color }}"></span>
+        {% endif %}
+        <h2 class="text-lg font-semibold text-stone-700 dark:text-gray-100">{{ topic.display_name or topic.name }}</h2>
+      </div>
+      {% if topic.description %}
+      <p class="text-sm text-stone-600/70 dark:text-gray-400 mb-3">{{ topic.description }}</p>
+      {% endif %}
+      <div class="flex items-center justify-between">
+        {% if topic.count is defined %}
+        <span class="text-xs text-stone-500 dark:text-gray-500">{{ topic.count }} projects</span>
+        {% endif %}
+        <span class="text-xs text-brand-600 dark:text-brand-400 group-hover:underline">Browse &rarr;</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-16">
+      <svg class="w-16 h-16 mx-auto text-stone-300 dark:text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+      </svg>
+      <p class="text-stone-600/70 dark:text-gray-400">No topics available.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

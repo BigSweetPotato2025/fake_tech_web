@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Projects — Potatodev's Developer Atlas{% endblock %}
+{% block description %}Browse open source projects by stars, language, and activity.{% endblock %}
+
+{% block content %}
+<div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-enter">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-stone-700 dark:text-gray-100">Projects</h1>
+    <p class="mt-1 text-stone-600/70 dark:text-gray-400">
+      {% if total_count is defined %}
+        {{ total_count }} projects
+      {% endif %}
+      across {{ languages | length if languages else 0 }} languages
+    </p>
+  </div>
+
+  <!-- Filters bar -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <!-- Search -->
+      <div class="relative flex-1 sm:flex-none sm:w-64">
+        <input type="text" class="search-input input-search pl-10" placeholder="{{ search_placeholder or 'Search projects...' }}" value="{{ search_query or '' }}" aria-label="Search projects">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+
+      <!-- Language filter -->
+      {% if languages %}
+      <select class="input-search w-auto" onchange="if(this.value) window.location.href='/projects/{{ sort_by or 'stars' }}/1/?language=' + this.value;"
+              aria-label="Filter by language">
+        <option value="">All Languages</option>
+        {% for lang in languages %}
+          <option value="{{ lang }}" {% if selected_language == lang %}selected{% endif %}>{{ lang }}</option>
+        {% endfor %}
+      </select>
+      {% endif %}
+    </div>
+
+    <!-- Sort -->
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-stone-600/70 dark:text-gray-400">Sort by:</span>
+      <div class="flex rounded-lg border border-stone-200/40 dark:border-gray-800 overflow-hidden">
+        {% set sort_options = [('stars', 'Stars'), ('forks', 'Forks'), ('updated', 'Updated'), ('added', 'Added')] %}
+        {% for key, label in sort_options %}
+          <a href="/projects/{{ key }}/1/"
+             class="px-3 py-1.5 text-xs font-medium transition-colors duration-150
+                     {% if (sort_by or 'stars') == key %}
+                       bg-stone-200 dark:bg-brand-950 text-stone-700 dark:text-brand-400
+                     {% else %}
+                       text-stone-600/70 dark:text-gray-400 hover:bg-stone-50/80 dark:hover:bg-gray-800
+                    {% endif %}">
+            {{ label }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Project grid -->
+  {% if repos %}
+    <div class="grid grid-cols-fr gap-4" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+      {% for repo in repos %}
+        <div class="project-link-wrapper">
+          {% include "components/project_card.html" %}
+          <a class="project-detail-link" href="/projects/{{ repo.full_name }}/" aria-label="View details for {{ repo.full_name }}"></a>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-8">
+      {% with base_url = '/projects/' %}
+        {% include "components/pagination.html" %}
+      {% endwith %}
+    </div>
+  {% else %}
+    <div class="text-center py-16">
+      <svg class="w-16 h-16 mx-auto text-stone-300 dark:text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <p class="text-stone-600/70 dark:text-gray-400">No projects found.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

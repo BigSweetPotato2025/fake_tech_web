@@ -1,0 +1,63 @@
+{% if total_pages > 1 %}
+<nav class="flex items-center justify-center gap-1 mt-8" aria-label="Pagination">
+  {% if page > 1 %}
+    <a href="{{ base_url }}{% if page > 2 %}page/{{ page - 1 }}/{% endif %}"
+       class="btn-ghost px-3 py-2 text-sm" aria-label="Previous page">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+  {% else %}
+    <span class="btn-ghost px-3 py-2 text-sm opacity-40 cursor-not-allowed">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </span>
+  {% endif %}
+
+  {% set start = [1, page - 2] | max %}
+  {% set end = [total_pages, page + 2] | min %}
+
+  {% if start > 1 %}
+    <a href="{{ base_url }}" class="btn-ghost px-3 py-2 text-sm">1</a>
+    {% if start > 2 %}
+      <span class="px-2 text-stone-400/70 dark:text-gray-500">...</span>
+    {% endif %}
+  {% endif %}
+
+  {% for p in range(start, end + 1) %}
+    {% if p == page %}
+      <span class="px-3 py-2 rounded-lg text-sm font-medium bg-stone-200 dark:bg-brand-950 text-stone-700 dark:text-brand-400">
+        {{ p }}
+      </span>
+    {% else %}
+      <a href="{{ base_url }}{% if p > 1 %}page/{{ p }}/{% endif %}"
+         class="btn-ghost px-3 py-2 text-sm">
+        {{ p }}
+      </a>
+    {% endif %}
+  {% endfor %}
+
+  {% if end < total_pages %}
+    {% if end < total_pages - 1 %}
+      <span class="px-2 text-stone-400/70 dark:text-gray-500">...</span>
+    {% endif %}
+    <a href="{{ base_url }}page/{{ total_pages }}/" class="btn-ghost px-3 py-2 text-sm">{{ total_pages }}</a>
+  {% endif %}
+
+  {% if page < total_pages %}
+    <a href="{{ base_url }}page/{{ page + 1 }}/"
+       class="btn-ghost px-3 py-2 text-sm" aria-label="Next page">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </a>
+  {% else %}
+    <span class="btn-ghost px-3 py-2 text-sm opacity-40 cursor-not-allowed">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </span>
+  {% endif %}
+</nav>
+{% endif %}

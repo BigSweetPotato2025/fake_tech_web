@@ -1,0 +1,15 @@
+{
+  "name": "developer-atlas",
+  "version": "1.0.0",
+  "description": "Developer Atlas - Open Source Project Discovery Engine",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./assets/css/input.css -o ./dist/assets/css/output.css --minify",
+    "watch:css": "tailwindcss -i ./assets/css/input.css -o ./dist/assets/css/output.css --watch",
+    "build": "npm run build:css"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "@tailwindcss/typography": "^0.5.10"
+  }
+}

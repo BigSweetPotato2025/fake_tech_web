@@ -1,0 +1,112 @@
+site:
+  name: "Developer Atlas"
+  description: "面向开发者的开源项目导航网站 — 发现优质开源项目"
+  url: "https://developer-atlas.example.com"
+  language: "zh-CN"
+  author: "Developer Atlas Team"
+  copyright: "Developer Atlas"
+
+# ── 数据抓取模式 ──
+# mode: github  → 主站模式，持有 API Token，从 GitHub 抓取数据
+# mode: remote  → 子站模式，无 Token，从主站 HTTP 拉取缓存
+fetch:
+  mode: github
+  remote_url: ""                          # 仅 remote 模式需要：主站 cache URL
+  cache_token: ""                         # 仅 remote 模式需要：鉴权头
+
+github:
+  token: "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"
+  api_base: "https://api.github.com"
+  per_page: 100
+  request_delay: 1.0
+
+cache:
+  json_dir: "cache/json"
+  readme_dir: "cache/readme"
+  expire_days: 1
+
+render:
+  output_dir: "dist"
+  max_readme_size: 102400
+  readme_cache_days: 7
+
+deploy:
+  remote_host: "your-server.example.com"
+  remote_path: "/var/www/developer-atlas"
+
+topics:
+  - name: "ai"
+    display_name: "AI"
+    description: "人工智能与机器学习"
+    keywords: ["ai", "machine-learning", "deep-learning", "llm", "artificial-intelligence"]
+    color: "#8b5cf6"
+  - name: "database"
+    display_name: "Database"
+    description: "数据库与存储"
+    keywords: ["database", "sql", "nosql", "storage", "cache"]
+    color: "#3b82f6"
+  - name: "docker"
+    display_name: "Docker"
+    description: "容器化与编排"
+    keywords: ["docker", "container", "kubernetes"]
+    color: "#0ea5e9"
+  - name: "cli"
+    display_name: "CLI"
+    description: "命令行工具"
+    keywords: ["cli", "terminal", "command-line"]
+    color: "#10b981"
+  - name: "security"
+    display_name: "Security"
+    description: "安全工具与实践"
+    keywords: ["security", "authentication", "encryption", "cybersecurity"]
+    color: "#ef4444"
+  - name: "networking"
+    display_name: "Networking"
+    description: "网络与通信"
+    keywords: ["networking", "http", "tcp", "proxy", "vpn"]
+    color: "#f59e0b"
+  - name: "linux"
+    display_name: "Linux"
+    description: "Linux 系统工具"
+    keywords: ["linux", "unix", "system", "kernel"]
+    color: "#78716c"
+  - name: "web"
+    display_name: "Web"
+    description: "Web 开发框架与库"
+    keywords: ["web", "framework", "http", "api"]
+    color: "#06b6d4"
+  - name: "self-hosted"
+    display_name: "Self-hosted"
+    description: "可自部署的服务"
+    keywords: ["self-hosted", "selfhosted", "on-premise"]
+    color: "#14b8a6"
+  - name: "devops"
+    display_name: "DevOps"
+    description: "开发运维与 CI/CD"
+    keywords: ["devops", "ci", "cd", "deployment", "monitoring"]
+    color: "#8b5cf6"
+  - name: "editor"
+    display_name: "Editor"
+    description: "编辑器与 IDE 插件"
+    keywords: ["editor", "ide", "vscode", "vim", "plugin"]
+    color: "#6366f1"
+  - name: "testing"
+    display_name: "Testing"
+    description: "测试框架与工具"
+    keywords: ["testing", "test", "unit-test", "e2e", "integration-test"]
+    color: "#84cc16"
+  - name: "media"
+    display_name: "Media"
+    description: "音视频与图像处理"
+    keywords: ["media", "video", "audio", "image", "processing"]
+    color: "#ec4899"
+  - name: "game"
+    display_name: "Game"
+    description: "游戏开发与引擎"
+    keywords: ["game", "gamedev", "game-engine"]
+    color: "#f43f5e"
+  - name: "learning"
+    display_name: "Learning"
+    description: "学习资源与教程"
+    keywords: ["learning", "tutorial", "education", "course"]
+    color: "#22d3ee"

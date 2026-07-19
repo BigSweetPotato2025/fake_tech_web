@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.env
+cache/
+dist/
+node_modules/
+.omo/
+.playwright-mcp/
+.DS_Store
+venv/
+*.egg-info/
+homepage*.png

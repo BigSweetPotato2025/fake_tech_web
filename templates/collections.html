@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Collections — Potatodev's Developer Atlas{% endblock %}
+{% block description %}Curated collections of open source projects.{% endblock %}
+
+{% block content %}
+<div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-enter">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-stone-700 dark:text-gray-100">Collections</h1>
+    <p class="mt-1 text-stone-600/70 dark:text-gray-400">Curated collections of open source projects</p>
+  </div>
+
+  {% if collections %}
+  <div class="space-y-6">
+    {% for collection in collections %}
+    <div class="card p-6">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-stone-700 dark:text-gray-100">{{ collection.name }}</h2>
+          {% if collection.description %}
+          <p class="text-sm text-stone-600/70 dark:text-gray-400 mt-1">{{ collection.description }}</p>
+          {% endif %}
+        </div>
+        {% if collection.count is defined %}
+        <span class="tag text-xs flex-shrink-0">{{ collection.count }} projects</span>
+        {% endif %}
+      </div>
+
+      {% if collection.repos %}
+      <div class="grid grid-cols-fr gap-3" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+        {% for repo in collection.repos[:6] %}
+        <a href="/projects/{{ repo.full_name }}/" class="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50/80 dark:hover:bg-gray-800 transition-colors">
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-stone-700 dark:text-gray-100 truncate">{{ repo.full_name }}</div>
+            {% if repo.description %}
+            <div class="text-xs text-stone-600/70 dark:text-gray-400 line-clamp-1">{{ repo.description }}</div>
+            {% endif %}
+          </div>
+          {% if repo.stars is defined %}
+          <span class="text-xs text-stone-400 dark:text-gray-500 flex-shrink-0">{{ stars_format(repo.stars) }}</span>
+          {% endif %}
+        </a>
+        {% endfor %}
+      </div>
+      {% if collection.repos | length > 6 %}
+      <div class="mt-3 text-center">
+        <a href="/projects/" class="text-xs text-brand-600 dark:text-brand-400 hover:underline">
+          View all {{ collection.count }} projects &rarr;
+        </a>
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-16">
+      <svg class="w-16 h-16 mx-auto text-stone-300 dark:text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+    </svg>
+    <p class="text-stone-600/70 dark:text-gray-400">Collections coming soon.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

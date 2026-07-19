@@ -1,0 +1,4 @@
+:8080 {
+    root * /Users/bobo/code/vps/fake_tech_web/dist
+    file_server
+}

@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Potatodev's Developer Atlas{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-gradient-to-br from-amber-100 via-orange-50 to-amber-50 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900 border-b border-stone-200 dark:border-gray-800">
+  <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+    <div class="max-w-3xl mx-auto text-center">
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-stone-700 dark:text-gray-100 tracking-tight text-balance">
+        Discover Great
+        <span class="text-brand-600 dark:text-brand-400">Open Source</span>
+        Projects
+      </h1>
+      <p class="mt-4 text-lg text-stone-600/80 dark:text-gray-400 max-w-xl mx-auto">
+        Curated collection of the best open source projects. Updated daily from GitHub, organized by topic, language, and activity.
+      </p>
+      <div class="mt-8 max-w-lg mx-auto">
+        <div class="relative">
+          <input type="text" class="search-input input-search pl-10" placeholder="Search projects..." aria-label="Search projects">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Statistics Banner -->
+{% if stats %}
+<div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-enter">
+  <div class="stats-grid">
+    {% if stats.total_projects is defined %}
+      {% with value = stats_format(stats.total_projects), label = "Projects" %}
+        {% include "components/stats_card.html" %}
+      {% endwith %}
+    {% endif %}
+    {% if stats.total_topics is defined %}
+      {% with value = stats.total_topics, label = "Topics" %}
+        {% include "components/stats_card.html" %}
+      {% endwith %}
+    {% endif %}
+    {% if stats.total_languages is defined %}
+      {% with value = stats.total_languages, label = "Languages" %}
+        {% include "components/stats_card.html" %}
+      {% endwith %}
+    {% endif %}
+    {% if stats.total_organizations is defined %}
+      {% with value = stats.total_organizations, label = "Organizations" %}
+        {% include "components/stats_card.html" %}
+      {% endwith %}
+    {% endif %}
+    {% if stats.total_github_stars is defined %}
+      {% with value = stats_format(stats.total_github_stars), label = "GitHub Stars" %}
+        {% include "components/stats_card.html" %}
+      {% endwith %}
+    {% endif %}
+    {% if stats.last_updated is defined %}
+      {% with value = stats.last_updated[:10], label = "Last Updated" %}
+        {% include "components/stats_card.html" %}
+      {% endwith %}
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Trending Today -->
+{% if trending_projects %}
+<section class="section-white py-8 border-y border-stone-200/40 dark:border-gray-800">
+  <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-stone-700 dark:text-stone-200">🔥 Trending Today</h2>
+      <a href="/projects/?sort=stars" class="text-sm text-brand-600 dark:text-brand-400 hover:underline font-medium">View all →</a>
+    </div>
+    <div class="grid grid-cols-fr gap-4" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+      {% for repo in trending_projects[:8] %}
+        {% include "components/project_card.html" %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Latest Releases -->
+{% if latest_releases %}
+<section class="section-amber py-8 border-y border-stone-200/40 dark:border-gray-800">
+  <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-stone-700 dark:text-stone-200">📦 Latest Releases</h2>
+      <a href="/projects/?sort=updated" class="text-sm text-brand-600 dark:text-brand-400 hover:underline font-medium">View all →</a>
+    </div>
+    <div class="card divide-y divide-amber-100 dark:divide-gray-800 overflow-hidden">
+      {% for release in latest_releases[:6] %}
+      <a href="{{ release.url }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between px-5 py-4 hover:bg-stone-50/80 dark:hover:bg-gray-800/50 transition-colors">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium text-stone-700 dark:text-gray-100 truncate">{{ release.full_name }}</span>
+            {% if release.latest_release_tag %}
+              <span class="tag text-xs">{{ release.latest_release_tag }}</span>
+            {% endif %}
+          </div>
+          {% if release.latest_release_name and release.latest_release_name != release.latest_release_tag %}
+            <p class="text-xs text-stone-500/70 dark:text-gray-400 mt-0.5 truncate">{{ release.latest_release_name }}</p>
+          {% endif %}
+        </div>
+        <div class="flex items-center gap-4 flex-shrink-0 ml-4">
+          <span class="text-xs text-stone-500 dark:text-gray-500">
+            {% if release.latest_release_published %}
+              {{ time_ago(release.latest_release_published) }}
+            {% endif %}
+          </span>
+          <span class="flex items-center gap-1 text-xs text-stone-600 dark:text-gray-400">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+            {{ stars_format(release.stars) }}
+          </span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Popular Topics -->
+{% if popular_topics %}
+<section class="section-orange py-8 border-y border-stone-200/40 dark:border-gray-800">
+  <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-orange-900 dark:text-orange-200">🏷️ Popular Topics</h2>
+      <a href="/topics/" class="text-sm text-brand-600 dark:text-brand-400 hover:underline font-medium">Browse all →</a>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      {% for topic in popular_topics %}
+      <a href="/topics/{{ topic.name }}/" class="card-hover flex items-center gap-2 px-4 py-2.5">
+        {% if topic.color %}
+          <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: {{ topic.color }}"></span>
+        {% endif %}
+        <span class="text-sm font-medium text-stone-700 dark:text-gray-100">{{ topic.display_name or topic.name }}</span>
+        {% if topic.count is defined %}
+          <span class="text-xs text-stone-500 dark:text-gray-400">({{ topic.count }})</span>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Featured Collections -->
+{% if featured_collections %}
+<section class="section-white py-8 border-y border-stone-200/40 dark:border-gray-800">
+  <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-stone-700 dark:text-stone-200">📚 Featured Collections</h2>
+      <a href="/collections/" class="text-sm text-brand-600 dark:text-brand-400 hover:underline font-medium">View all →</a>
+    </div>
+    <div class="grid grid-cols-fr gap-4" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+      {% for collection in featured_collections[:3] %}
+      <div class="collection-card bg-white/90 dark:bg-gray-900/90 border border-stone-200/40 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all p-5">
+        <h3 class="text-base font-semibold text-stone-700 dark:text-gray-100 mb-1">{{ collection.name }}</h3>
+        <p class="text-sm text-stone-600/70 dark:text-gray-400 mb-3">{{ collection.description }}</p>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-stone-500 dark:text-gray-500">{{ collection.count }} projects</span>
+          <a href="/collections/" class="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">Explore</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Latest Projects -->
+{% if latest_projects %}
+<section class="section-amber py-8 border-y border-stone-200/40 dark:border-gray-800">
+  <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-stone-700 dark:text-stone-200">✨ Latest Projects</h2>
+      <a href="/projects/" class="text-sm text-brand-600 dark:text-brand-400 hover:underline font-medium">View all →</a>
+    </div>
+    <div class="grid grid-cols-fr gap-4" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+      {% for repo in latest_projects[:6] %}
+        {% include "components/project_card.html" %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function stats_format(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+    return n.toString();
+  }
+</script>
+{% endblock %}

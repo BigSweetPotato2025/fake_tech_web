@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}{{ display_name or name }} — Topics — Potatodev's Developer Atlas{% endblock %}
+{% block description %}Browse {{ display_name or name }} open source projects.{% endblock %}
+
+{% block content %}
+<div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-enter">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb mb-6">
+    <a href="/">Home</a>
+    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <a href="/topics/">Topics</a>
+    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <span class="text-stone-700 dark:text-gray-200">{{ display_name or name }}</span>
+  </nav>
+
+  <div class="mb-8">
+    <div class="flex items-center gap-3 mb-2">
+      {% if color %}
+      <span class="w-4 h-4 rounded-full flex-shrink-0" style="background-color: {{ color }}"></span>
+      {% endif %}
+      <h1 class="text-3xl font-bold text-stone-700 dark:text-gray-100">{{ display_name or name }}</h1>
+    </div>
+    {% if topic_desc %}
+    <p class="text-stone-600/70 dark:text-gray-400">{{ topic_desc }}</p>
+    {% endif %}
+  </div>
+
+  {% if repos %}
+  <div class="grid grid-cols-fr gap-4" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+    {% for repo in repos %}
+      <a href="/projects/{{ repo.full_name }}/" class="block">
+        {% include "components/project_card.html" %}
+      </a>
+    {% endfor %}
+  </div>
+
+  {% if total_pages is defined and total_pages > 1 %}
+  <div class="mt-8">
+    {% with base_url = '/topics/' + name + '/' %}
+      {% include "components/pagination.html" %}
+    {% endwith %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="text-center py-16">
+    <p class="text-stone-600/70 dark:text-gray-400">No projects found for this topic.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
