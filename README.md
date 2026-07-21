@@ -74,13 +74,17 @@ pip install -r requirements.txt
 # 2. Install TailwindCSS
 npm install
 
-# 3. Configure
-# Edit config/config.yaml: set your GitHub token
+# 3. Configure secrets (required!)
+cp config/secret.yaml.example config/secret.yaml
+# Edit config/secret.yaml: add your GitHub token
 
-# 4. Build the site
+# 4. Configure site (optional)
+# Edit config/config.yaml: update site name, URL, topics, etc.
+
+# 5. Build the site
 python builder/build.py
 
-# 5. (Optional) Watch TailwindCSS during development
+# 6. (Optional) Watch TailwindCSS during development
 npm run watch:css
 ```
 
@@ -102,8 +106,22 @@ python builder/build.py -v
 
 ## Configuration
 
-Edit `config/config.yaml`:
+项目使用**双配置文件**：
 
+| 文件 | 内容 | 是否提交到仓库 |
+|------|------|:---:|
+| `config/config.yaml` | 公开配置（站点信息、topics 等） | ✅ |
+| `config/secret.yaml` | 敏感配置（GitHub token） | ❌ |
+
+`load_config` 会自动合并两个文件，`secret.yaml` 的值会覆盖 `config.yaml`。
+
+**首次部署**：
+```bash
+cp config/secret.yaml.example config/secret.yaml
+# 编辑 secret.yaml，填入 GitHub token
+```
+
+**config.yaml 示例**：
 ```yaml
 site:
   name: "Developer Atlas"
@@ -111,32 +129,70 @@ site:
   url: "https://your-domain.com"
 
 github:
-  token: "YOUR_GITHUB_TOKEN"  # Required for API access
+  # token 放在 config/secret.yaml 中，不要写在这里
   per_page: 100
   request_delay: 1.0
 
 cache:
-  expire_days: 1  # How often to refresh API data
+  expire_days: 1
+```
+
+**secret.yaml 示例**：
+```yaml
+github:
+  token: "ghp_YourTokenHere"
 ```
 
 ## Deployment
 
-### Caddy/Nginx
+### VPS 部署（推荐）
 
-The `dist/` directory contains a fully static site. Point your web server to it:
+在 VPS 上克隆仓库，本地构建，用 Caddy/Nginx 直接服务 `dist/`：
 
 ```bash
-# Build
+# 1. 克隆仓库
+git clone <repo-url> /opt/fake_tech_web
+cd /opt/fake_tech_web
+
+# 2. 安装依赖
+pip install -r requirements.txt
+npm install
+
+# 3. 配置密钥
+cp config/secret.yaml.example config/secret.yaml
+# 编辑 secret.yaml，填入 GitHub token
+
+# 4. 构建
 python builder/build.py
 
-# Deploy via rsync
-python -c "from builder.deploy import deploy_rsync; deploy_rsync('dist', 'user@host', '/var/www/developer-atlas')"
+# 5. 配置 Caddy/Nginx 指向 dist/ 目录
+# 见下方 Caddy 配置示例
+
+# 6. 设置定时更新（可选）
+# crontab -e
+# 0 6 * * * cd /opt/fake_tech_web && python builder/build.py >> /var/log/build.log 2>&1
 ```
 
-Or use the deploy script:
+### Caddy 配置
+
+```caddy
+your-domain.com {
+    root * /opt/fake_tech_web/dist
+    file_server
+    encode gzip
+}
+```
+
+### rsync 远程部署
+
+从本地构建后推送到远程服务器：
 
 ```bash
-# Edit deploy: section in config.yaml first
+# 编辑 config.yaml 中的 deploy 部分
+# deploy:
+#   remote_host: "user@host"
+#   remote_path: "/var/www/site"
+
 bash scripts/deploy.sh
 ```
 
