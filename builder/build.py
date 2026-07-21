@@ -29,7 +29,6 @@ logger = logging.getLogger("developer-atlas")
 
 
 def load_config(config_path: str) -> dict:
-    """Load YAML configuration file."""
     path = Path(config_path)
     if not path.exists():
         logger.error("Config file not found: %s", path.absolute())
@@ -41,6 +40,15 @@ def load_config(config_path: str) -> dict:
     if not config:
         logger.error("Empty config file: %s", path)
         sys.exit(1)
+
+    # Merge secret.yaml (same directory, overrides config)
+    secret_path = path.parent / "secret.yaml"
+    if secret_path.exists():
+        with secret_path.open("r", encoding="utf-8") as f:
+            secret = yaml.safe_load(f) or {}
+        for key, value in secret.items():
+            config.setdefault(key, {}).update(value)
+        logger.info("Loaded secrets from %s", secret_path)
 
     logger.info("Loaded config from %s", path)
     return config

@@ -15,7 +15,7 @@ fetch:
   cache_token: ""                         # 仅 remote 模式需要：鉴权头
 
 github:
-  token: "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"
+  # token is loaded from config/secret.yaml (not committed to git)
   api_base: "https://api.github.com"
   per_page: 100
   request_delay: 1.0
