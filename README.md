@@ -258,7 +258,7 @@ cp config/secret.yaml.example config/secret.yaml  # 子站不需要 GitHub token
 fetch:
   mode: remote                          # 子站模式
   remote_url: "https://www.howellcome.com/cache"  # 主站 cache URL
-  cache_token: "devatlas_cache_token_2026"        # 主站配置的 token
+  cache_token: "your-cache-token"                 # 与主站 Caddy 配置一致
 
 # 注意：子站不需要 github.token，secret.yaml 可为空
 ```
@@ -297,7 +297,7 @@ sub.your-domain.com {
 
 ```caddy
 @cache path /cache/*
-@cache_auth header X-Cache-Token "devatlas_cache_token_2026"
+@cache_auth header X-Cache-Token "your-cache-token"
 
 handle @cache {
     handle @cache_auth { file_server }
