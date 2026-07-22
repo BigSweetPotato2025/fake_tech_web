@@ -34,11 +34,34 @@
 ### 6. 项目结构速查
 ```
 fake_tech_web/
-  config/config.yaml      # 主配置（GitHub Token 在这里）
-  fetch/github.py         # GitHub API 抓取逻辑
-  builder/build.py        # 构建入口（fetch → render → deploy）
-  render/*.py             # 各页面渲染逻辑
-  templates/*.html        # Jinja2 模板
-  cache/json/             # API 数据缓存
-  dist/                   # 构建输出（静态 HTML）
+  config/config.yaml          # 公开配置（不含 token）
+  config/secret.yaml          # 敏感配置（含 GitHub API token），已被 .gitignore 忽略
+  config/secret.yaml.example  # 模板文件（提交到仓库）
+  fetch/github.py             # GitHub API 抓取逻辑
+  builder/build.py            # 构建入口（fetch → render → deploy）
+  render/*.py                 # 各页面渲染逻辑
+  templates/*.html            # Jinja2 模板
+  cache/json/                 # API 数据缓存
+  dist/                       # 构建输出（静态 HTML）
 ```
+
+### 7. 网络资源规则（必须遵守）
+- 禁止引用任何**中国大陆网络无法访问**的外部资源，包括但不限于：
+  - Google Fonts（`fonts.googleapis.com`、`fonts.gstatic.com`）
+  - Google APIs（`*.googleapis.com`）
+  - Google Analytics、Google Ads
+  - Facebook、Twitter/X 等社交平台 SDK
+  - 其他已知在中国大陆被屏蔽的 CDN 或服务
+- 所有外部资源引用必须确保在中国大陆可正常加载。
+- 字体优先使用系统默认字体（`system-ui`, `-apple-system` 等），不要依赖外部字体服务。
+
+### 8. Git 推送规则（必须遵守）
+- **远程仓库**：`git@github.com:BigSweetPotato2025/fake_tech_web.git`
+- **SSH key**：`~/.ssh/id_ed25519_github`（专用 key，不要用默认 key）
+- **推送命令**：`GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_github" git push`
+- **GitHub 账号**：`BigSweetPotato2025`
+- **git user 配置**：
+  - `user.name` = `BigSweetPotato2025`
+  - `user.email` = `BigSweetPotato2025@users.noreply.github.com`
+- **config/secret.yaml 绝不能提交到仓库**，推送前必须检查 `git status` 确认它不在 staged 列表
+- 旧 GitLab remote 名为 `gitlab`，不要推到 gitlab

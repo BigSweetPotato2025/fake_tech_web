@@ -427,6 +427,8 @@ README 内容    → cache/readme/（Markdown 格式）
 - 广告
 - 弹窗
 - 外部跟踪器
+- **Google Fonts** 或其他中国大陆无法访问的外部资源引用（`fonts.googleapis.com`、`fonts.gstatic.com`、`*.googleapis.com` 等）
+- 字体必须使用系统默认字体，不得依赖外部字体服务
 
 **颜色方案：（V2 暖色调柔和版）**
 

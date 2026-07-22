@@ -2,6 +2,15 @@
 
 面向开发者的开源项目导航网站 — 发现优质开源项目。
 
+## 网络资源规则
+
+由于网站面向中国大陆用户，**禁止**在页面中引用以下外部资源：
+- Google Fonts（`fonts.googleapis.com`、`fonts.gstatic.com`）
+- Google APIs（`*.googleapis.com`）
+- 其他在中国大陆无法访问的 CDN 或服务
+
+字体必须使用系统默认字体，不得依赖外部字体服务。
+
 ## Architecture
 
 ```
