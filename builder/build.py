@@ -346,6 +346,16 @@ def main() -> None:
         logger.info("=== Build complete ===")
         output_dir = config.get("render", {}).get("output_dir", "dist")
         logger.info("Output: %s", output_dir)
+
+        # Copy compiled Tailwind CSS to dist if it exists
+        src_css = project_root / "assets" / "css" / "output.css"
+        dst_css = project_root / output_dir / "assets" / "css" / "output.css"
+        if src_css.exists():
+            dst_css.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_css, dst_css)
+            logger.info("Copied output.css to %s", dst_css)
+        else:
+            logger.warning("output.css not found at %s — run Tailwind build first", src_css)
     else:
         logger.error("=== Build failed ===")
         sys.exit(1)
