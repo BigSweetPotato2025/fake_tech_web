@@ -8,9 +8,8 @@ Usage:
     python builder/build.py --skip-render    # Fetch data only, no HTML
     python builder/build.py --config path/to/config.yaml
 
-Fetch modes (set in config.yaml):
-    fetch.mode: github   — Master mode. Calls GitHub API, exports cache to dist/cache/
-    fetch.mode: remote   — Slave mode. Pulls cached data from master via HTTP
+Data source:
+    GitHub REST API — every site fetches independently with its own token
 """
 
 from __future__ import annotations
@@ -22,6 +21,11 @@ import sys
 from pathlib import Path
 
 import yaml
+
+# Allow running as `python builder/build.py` without PYTHONPATH
+_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
 from builder.clean import clean_cache, clean_output
 
@@ -93,13 +97,8 @@ def build(
     # Step 1: Fetch
     if not skip_fetch:
         logger.info("=== Step 1: Fetch ===")
-        fetch_mode = config.get("fetch", {}).get("mode", "github")
-        if fetch_mode == "remote":
-            from fetch.remote import RemoteFetcher
-            fetcher = RemoteFetcher(config, cache_dir)
-        else:
-            from fetch.github import GitHubFetcher
-            fetcher = GitHubFetcher(config, cache_dir)
+        from fetch.github import GitHubFetcher
+        fetcher = GitHubFetcher(config, cache_dir)
 
         trending = fetcher.fetch_trending()
         recently_updated = fetcher.fetch_recently_updated()
@@ -247,29 +246,10 @@ def build(
         render_seo(env, cache_dir, output_dir, config, site_data)
 
         logger.info("Render complete. Output: %s", output_dir)
-
-        # Step 3: Export cache for sub-sites (master mode only)
-        fetch_mode = config.get("fetch", {}).get("mode", "github")
-        if fetch_mode != "remote":
-            _export_cache(cache_dir, output_dir)
     else:
         logger.info("=== Step 2: Render (skipped) ===")
 
     return True
-
-
-def _export_cache(cache_dir: Path, output_dir: Path) -> None:
-    """Copy cache/ into dist/cache/ so sub-sites can fetch over HTTP."""
-    import shutil
-    src = cache_dir
-    dst = output_dir / "cache"
-    if src.exists():
-        if dst.exists():
-            shutil.rmtree(dst)
-        shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".gitkeep"))
-        logger.info("Cache exported to %s (%d files)", dst, len(list(dst.rglob("*"))))
-    else:
-        logger.warning("Cache directory not found: %s", src)
 
 
 def _language_color(lang: str) -> str:

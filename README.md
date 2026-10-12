@@ -13,7 +13,9 @@
 
 ## Architecture
 
-### 主站模式 (Master) — fetch.mode: github
+### 构建流程（每站独立更新）
+
+每台站点独立持有 GitHub Token，直连 GitHub API 抓取数据并构建，站点之间互不依赖。
 
 ```
 GitHub API
@@ -22,34 +24,11 @@ GitHub API
   Fetcher  (fetch/github.py)
     |
     v
- JSON Cache  (cache/json/, cache/readme/)
-    |
-    ├──→ Renderer  (render/*.py) → Static HTML (dist/)
-    │
-    └──→ _export_cache() → dist/cache/  ← HTTP 对外暴露
-                                          供子站拉取
+  JSON Cache  (cache/json/, cache/readme/)
     |
     v
-  Deploy  (Caddy/Nginx)
-```
-
-### 子站模式 (Slave) — fetch.mode: remote
-
-```
- 主站 HTTP API  (https://master.com/cache/)
+  Renderer  (render/*.py) → Static HTML (dist/)
     |
-    v
- RemoteFetcher  (fetch/remote.py)
-    |
-    v
- Local Cache    (cache/json/, cache/readme/)
-    |
-    v
-  Renderer  (render/*.py)
-    |
-    v
- Static HTML  (dist/)
-
     v
   Deploy  (Caddy/Nginx)
 ```
@@ -226,86 +205,6 @@ your-domain.com {
 
 bash scripts/deploy.sh
 ```
-
-### 子站部署 (Slave / Remote Mode)
-
-子站无需 GitHub Token，从主站 HTTP 拉取缓存数据后自行构建。
-
-#### 前置条件
-
-- 主站已部署并正常运行（`dist/cache/` 目录可通过 HTTP 访问）
-- 主站已配置 `/cache/*` 路径的 token 认证（见主站 Caddy 配置）
-- 子站有 Python 3.11+ 和 Node.js 18+
-
-#### 部署步骤
-
-```bash
-# 1. 克隆仓库（或 rsync 从主站同步）
-git clone <repo-url> /var/www/fake_tech
-cd /var/www/fake_tech
-
-# 2. 安装依赖
-pip install -r requirements.txt
-npm install
-
-# 3. 配置子站模式
-cp config/secret.yaml.example config/secret.yaml  # 子站不需要 GitHub token，但文件必须存在
-```
-
-编辑 `config/config.yaml`，将 fetch 模式改为 remote 并指向主站：
-
-```yaml
-fetch:
-  mode: remote                          # 子站模式
-  remote_url: "https://www.howellcome.com/cache"  # 主站 cache URL
-  cache_token: "your-cache-token"                 # 与主站 Caddy 配置一致
-
-# 注意：子站不需要 github.token，secret.yaml 可为空
-```
-
-```bash
-# 4. 构建（自动从主站拉取缓存数据）
-python builder/build.py
-
-# 5. 配置 Caddy 指向 dist/
-```
-
-#### 子站 Caddy 配置
-
-```caddy
-sub.your-domain.com {
-    root * /var/www/fake_tech/dist
-    file_server
-    encode gzip
-}
-```
-
-#### 更新机制
-
-子站数据依赖主站缓存。建议主站定时构建后，子站也定时拉取更新：
-
-```bash
-# 子站 crontab：每天凌晨同步
-0 7 * * * cd /var/www/fake_tech && python builder/build.py --skip-fetch >> /var/log/build.log 2>&1
-```
-
-`--skip-fetch` 会复用本地缓存的 JSON 数据（上次从主站拉取的内容），如需强制刷新可去掉该参数。
-
-#### 主站 cache 认证机制
-
-主站通过 Caddy 的 header 校验保护 `/cache/*` 路径：
-
-```caddy
-@cache path /cache/*
-@cache_auth header X-Cache-Token "your-cache-token"
-
-handle @cache {
-    handle @cache_auth { file_server }
-    handle { respond 403 }
-}
-```
-
-子站 `RemoteFetcher` 会自动在请求中附加 `X-Cache-Token` 头。
 
 ### Performance Budget
 

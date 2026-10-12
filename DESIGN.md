@@ -759,189 +759,68 @@ python
 
 ---
 
-## 二十三、多站部署方案（主站 + 子站）
+## 二十三、多站部署方案（每站独立更新）
 
-当需要部署多个网站时，无需每个站独立调用 GitHub API。采用 **主站负责抓取，子站复用缓存** 的架构，一个 Token 即可支撑任意数量的站点。
+每台站点独立持有 GitHub Token，直接调用 GitHub API 抓取数据并构建，站点之间互不依赖。
 
 ### 架构图
 
 ```
-                    ┌──────────────────┐
-                    │   GitHub API     │
-                    │   5,000 req/h    │
-                    └────────┬─────────┘
-                             │
-                    ┌────────▼─────────┐      持有 Token
-                    │   主站 Master    │      fetch.mode: github
-                    │  python build.py │
-                    └───┬────────┬─────┘
-                        │        │
-                        │   ┌────▼────────┐
-                        │   │  dist/cache/ │  ← build 时自动导出
-                        │   └────┬────────┘
-                        │        │
-          ┌─────────────┼────────┼──────────────────┐
-          │             │        │                   │
-          │      HTTPS  │  HTTPS │    HTTPS          │
-          ▼             ▼        ▼                   ▼
-   ┌──────────┐  ┌──────────┐  ┌──────────┐     ┌──────────┐
-   │ 子站 1   │  │ 子站 2   │  │ 子站 3   │ ... │ 子站 N   │
-   │无 Token  │  │无 Token  │  │无 Token  │     │无 Token  │
-   │remote_url│  │remote_url│  │remote_url│     │remote_url│
-   └──────────┘  └──────────┘  └──────────┘     └──────────┘
+  站点 1 (token 1)     站点 2 (token 2)     ...     站点 N (token N)
+        │                    │                          │
+        └────────────────────┼──────────────────────────┘
+                             ▼
+                        GitHub API
 ```
 
 ### 工作流程
 
-**主站（Master）—— 每台 VPS 只需一台：**
+每台站点：
 ```
-crontab 每天 2:00
-  → python builder/build.py --clean
+crontab 每天定时
+  → python builder/build.py
     → Step 1: Fetch (GitHub API → cache/)
-    → Step 2: Render (cache → dist/)
-    → Step 3: Export cache/ → dist/cache/   ← 自动完成
-```
-
-**子站（Slave）—— 其余 N 台 VPS：**
-```
-crontab 每天 2:30（主站完成后）
-  → python builder/build.py --skip-fetch
-    → Step 1: Fetch (跳过，自动从 master 拉取缓存)
     → Step 2: Render (cache → dist/)
 ```
 
 ### 配置方式
 
-**主站 `config.yaml`：**
+`config.yaml`（公开）：
 ```yaml
 fetch:
-  mode: github                     # 主站模式
-  remote_url: ""                   # 不需要
-  cache_token: ""                  # 不需要
-
-github:
-  token: "ghp_xxxxxxxxxxxx"        # 持有 Token
-
-cache:
-  json_dir: "cache/json"
-  readme_dir: "cache/readme"
+  mode: github
 ```
 
-**子站 `config.yaml`：**
+`secret.yaml`（每台站点各自持有，不提交）：
 ```yaml
-fetch:
-  mode: remote                     # 子站模式
-  remote_url: "https://master.example.com/cache/"
-  cache_token: "your-shared-secret"
-
 github:
-  token: ""                        # 不需要 Token
-
-cache:
-  json_dir: "cache/json"
-  readme_dir: "cache/readme"
+  token: "ghp_xxxxxxxxxxxx"
 ```
 
-### 安全加固（Nginx）
+### API 配额说明
 
-子站通过 HTTPS 从主站的 `https://master.example.com/cache/` 拉取缓存文件。
-为避免被扫描和盗刷流量，主站 Nginx 做三层防护：
+一次完整构建约消耗：
+- Search API：约 49 次（限额 10 次/分钟，代码内置 1 秒请求间隔与 429 退避重试）
+- Core API：约 200 次（releases 查询）
 
-```nginx
-# 1. 随机路径前缀（部署时生成一次，写入主站和子站配置）
-#    不要用 /cache/，用 /static-cache/aB3xK9mZ/ 这类不可猜路径
-location ~ ^/static-cache/[a-zA-Z0-9]+/ {
-    alias /var/www/developer-atlas/cache/;
-
-    # 2. 只允许 JSON 和 Markdown 文件
-    location ~ \.(json|md)$ {
-        # 3. Header 鉴权
-        if ($http_x_cache_token != "your-shared-secret") {
-            return 403;
-        }
-
-        # 4. 速率限制（每 IP 每秒 5 次）
-        limit_req zone=cache_dl burst=10 nodelay;
-
-        # 5. gzip 压缩传输
-        gzip on;
-        gzip_types application/json text/markdown;
-
-        # 6. 禁止目录遍历
-        autoindex off;
-
-        # 7. 日志不记录（减少磁盘 IO）
-        access_log off;
-
-        add_header Cache-Control "public, max-age=3600";
-    }
-
-    # 非 .json .md 一律拒绝
-    location ~ . {
-        return 403;
-    }
-}
-```
-
-**Caddy 配置：**
-```caddyfile
-master.example.com {
-    root * /var/www/developer-atlas
-    file_server
-    encode gzip
-
-    @cache {
-        path /static-cache/aB3xK9mZ/*.json
-        path /static-cache/aB3xK9mZ/*.md
-        header X-Cache-Token "your-shared-secret"
-    }
-    @cache_deny {
-        path /static-cache/*
-    }
-    handle @cache {
-        file_server
-        rate_limit {
-            interval 1s
-            burst 10
-        }
-    }
-    handle @cache_deny {
-        respond 403
-    }
-}
-```
-
-### 流量评估
-
-| 项目 | 数据量 |
-|------|--------|
-| 每次 fetch 总缓存量 | ~1.5 MB |
-| 10 个子站每天传输 | ~15 MB |
-| 每月流量 | ~450 MB |
-| 典型 VPS 月配额 | 500 GB - 2 TB |
-| 流量占比 | **< 0.1%** |
-
-流量完全可以忽略，三层安全防护下被滥用的风险也很低。
+远低于单 Token 的 5,000 次/小时 Core 限额，单 Token 可支撑单站每日多次构建。
 
 ### 一句话总结
 
-> 同一套代码，三个配置字段决定角色（master / slave），一个 Token 养所有站。
+> 同一套代码，每站一个 Token，各自独立更新，互不依赖。
 
 ---
 
 ## 二十四、FAQ（补充）
 
-### Q: 一个 GitHub Token 够多少个子站用？
-理论上无限。只有主站消耗 API 额度。子站从主站 HTTP 拉取缓存，不碰 GitHub API。
+### Q: 一台站点需要配置什么？
+`config.yaml` 里保持 `fetch.mode: github`，`secret.yaml` 填入自己的 GitHub Token。
 
-### Q: 子站需要配置什么？
-三个字段：`fetch.mode: remote`，`fetch.remote_url`（主站 cache 地址），`fetch.cache_token`（鉴权密钥）。不需要 GitHub Token。
+### Q: 一个 GitHub Token 的额度够不够？
+够。单站每日一次完整构建约 250 次 API 调用，远低于 5,000 次/小时限额。
 
-### Q: 主站挂了怎么办？
-子站的 `RemoteFetcher` 会优先读取本地现有缓存。即使主站短暂不可用，子站可以继续使用旧的缓存渲染页面，不影响线上访问。
-
-### Q: 文件暴露在公网会不会被刷流量？
-三层防护：不可猜路径 + Header 鉴权 + 速率限制。JSON/MD 文件极小，即使偶尔扫到，每次请求也才几 KB。
+### Q: 构建失败 / GitHub 不可用怎么办？
+缓存机制兜底：`cache/` 中 1 天内的 JSON 直接复用；README 缓存 7 天。GitHub 短暂不可用不影响已渲染的线上页面（dist/ 静态文件照常服务）。
 
 ### Q: 数据多久更新一次？
-主站每天 fetch 一次（建议凌晨低峰期），子站建议错峰 30 分钟后执行，确保主站 cache 已更新完毕。
+建议每站每天定时构建一次（凌晨低峰期），各站时间可以错开。
