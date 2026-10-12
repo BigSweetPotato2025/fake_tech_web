@@ -19,6 +19,7 @@ import logging
 import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -123,20 +124,7 @@ def build(
         }
 
         # Build all_repos from all sources (dedup)
-        seen: set[str] = set()
-        all_repos = []
-        for repo in trending + recently_updated:
-            if repo.get("full_name") and repo["full_name"] not in seen:
-                seen.add(repo["full_name"])
-                all_repos.append(repo)
-
-        # Add topic repos
-        for topic_name, repos in topic_repos.items():
-            for repo in repos:
-                if repo.get("full_name") and repo["full_name"] not in seen:
-                    seen.add(repo["full_name"])
-                    all_repos.append(repo)
-
+        all_repos = _build_all_repos(trending, recently_updated, topic_repos)
         site_data["all_repos"] = all_repos
         logger.info("Total unique repos: %d", len(all_repos))
     else:
@@ -152,6 +140,15 @@ def build(
                     site_data[key] = data
                 except (json_module.JSONDecodeError, OSError) as e:
                     logger.warning("Failed to load cache %s: %s", f, e)
+
+        # Rebuild all_repos from loaded cache (same dedup logic as fetch step)
+        topic_repos = {k: v for k, v in site_data.items() if k.startswith("topic_")}
+        site_data["all_repos"] = _build_all_repos(
+            site_data.get("trending", []),
+            site_data.get("recently_updated", []),
+            topic_repos,
+        )
+        logger.info("Total unique repos (from cache): %d", len(site_data["all_repos"]))
 
     # Step 2: Render
     if not skip_render:
@@ -283,6 +280,26 @@ def _language_color(lang: str) -> str:
     return colors.get(lang, "#6366f1")
 
 
+def _build_all_repos(
+    trending: list[dict[str, Any]],
+    recently_updated: list[dict[str, Any]],
+    topic_repos: dict[str, list[dict[str, Any]]],
+) -> list[dict[str, Any]]:
+    """Merge trending + recently updated + topic repos, dedup by full_name."""
+    seen: set[str] = set()
+    all_repos: list[dict[str, Any]] = []
+    for repo in list(trending) + list(recently_updated):
+        if repo.get("full_name") and repo["full_name"] not in seen:
+            seen.add(repo["full_name"])
+            all_repos.append(repo)
+    for repos in topic_repos.values():
+        for repo in repos:
+            if repo.get("full_name") and repo["full_name"] not in seen:
+                seen.add(repo["full_name"])
+                all_repos.append(repo)
+    return all_repos
+
+
 def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -327,15 +344,33 @@ def main() -> None:
         output_dir = config.get("render", {}).get("output_dir", "dist")
         logger.info("Output: %s", output_dir)
 
-        # Copy compiled Tailwind CSS to dist if it exists
+        # Compile Tailwind CSS if missing (self-contained build)
         src_css = project_root / "assets" / "css" / "output.css"
+        if not src_css.exists():
+            tw = project_root / "node_modules" / ".bin" / "tailwindcss"
+            if tw.exists():
+                logger.info("output.css missing — compiling with TailwindCSS")
+                try:
+                    import subprocess
+                    subprocess.run(
+                        [str(tw), "--minify",
+                         "-i", str(project_root / "assets" / "css" / "input.css"),
+                         "-o", str(src_css)],
+                        cwd=str(project_root), timeout=300, check=True,
+                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                    )
+                    logger.info("Compiled output.css")
+                except (subprocess.SubprocessError, OSError) as e:
+                    logger.warning("TailwindCSS compile failed: %s", e)
+            else:
+                logger.warning("output.css not found and tailwindcss unavailable — run Tailwind build first")
+
+        # Copy compiled Tailwind CSS to dist
         dst_css = project_root / output_dir / "assets" / "css" / "output.css"
         if src_css.exists():
             dst_css.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_css, dst_css)
             logger.info("Copied output.css to %s", dst_css)
-        else:
-            logger.warning("output.css not found at %s — run Tailwind build first", src_css)
     else:
         logger.error("=== Build failed ===")
         sys.exit(1)
